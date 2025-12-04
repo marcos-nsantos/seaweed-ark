@@ -11,6 +11,7 @@ import {
   ListItemText,
   Box,
   Typography,
+  Chip,
 } from '@mui/material';
 import {
   Folder as FolderIcon,
@@ -101,7 +102,12 @@ export function FileRow({
   const displayName = getDisplayName(file);
 
   return (
-    <TableRow hover selected={selected} sx={{ cursor: 'pointer' }} onClick={() => onOpen(file)}>
+    <TableRow
+      hover
+      selected={selected}
+      sx={{ cursor: 'pointer', opacity: file.isDeleted ? 0.5 : 1 }}
+      onClick={() => onOpen(file)}
+    >
       <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
         <Checkbox checked={selected} onChange={() => onSelect(file)} />
       </TableCell>
@@ -110,6 +116,9 @@ export function FileRow({
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           {getFileIcon(file)}
           <Typography noWrap>{displayName}</Typography>
+          {file.isDeleted && (
+            <Chip label="Deleted" size="small" color="error" variant="outlined" />
+          )}
         </Box>
       </TableCell>
 

@@ -12,6 +12,7 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
+  Chip,
 } from '@mui/material';
 import {
   Folder as FolderIcon,
@@ -116,6 +117,7 @@ export function FileGrid({
                 position: 'relative',
                 border: isSelected ? 2 : 1,
                 borderColor: isSelected ? 'primary.main' : 'divider',
+                opacity: file.isDeleted ? 0.5 : 1,
               }}
             >
               <Checkbox
@@ -172,6 +174,15 @@ export function FileGrid({
                     <Typography variant="caption" color="text.secondary">
                       {formatBytes(file.size)}
                     </Typography>
+                  )}
+                  {file.isDeleted && (
+                    <Chip
+                      label="Deleted"
+                      size="small"
+                      color="error"
+                      variant="outlined"
+                      sx={{ mt: 0.5 }}
+                    />
                   )}
                 </CardContent>
               </CardActionArea>

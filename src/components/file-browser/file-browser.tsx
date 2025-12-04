@@ -119,12 +119,19 @@ export function FileBrowser({ bucket, path, onNavigate }: FileBrowserProps) {
     if (file.isFolder) {
       const folderName = file.key.replace(prefix, '').replace(/\/$/, '');
       onNavigate([...path, folderName]);
+    } else if (file.isDeleted) {
+      toast.error('This file was deleted. Use "Versions" to restore it.');
     } else {
       setPreviewFile(file);
     }
   };
 
   const handleDownload = async (file: S3Object) => {
+    if (file.isDeleted) {
+      toast.error('This file was deleted. Use "Versions" to restore it.');
+      return;
+    }
+
     try {
       const response = await fetch('/api/s3/presign', {
         method: 'POST',
@@ -462,7 +469,7 @@ export function FileBrowser({ bucket, path, onNavigate }: FileBrowserProps) {
       <ConfirmDialog
         open={bulkDeleteOpen}
         title="Delete Multiple Items"
-        message={`Are you sure you want to delete ${selected.size} item${selected.size > 1 ? 's' : ''}? This action cannot be undone.`}
+        message={`Are you sure you want to delete ${selected.size} item${selected.size > 1 ? 's' : ''}?`}
         confirmLabel={`Delete ${selected.size} item${selected.size > 1 ? 's' : ''}`}
         onConfirm={handleBulkDelete}
         onCancel={() => setBulkDeleteOpen(false)}
