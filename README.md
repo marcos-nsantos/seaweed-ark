@@ -1,36 +1,148 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Argos
+
+Web UI for managing S3-compatible object storage (SeaweedFS).
+
+## Features
+
+- **File Browser** - Navigate, upload, download, rename, and delete files
+- **Bucket Management** - Create, delete, and configure buckets
+- **Versioning** - Enable/disable bucket versioning, view and download previous versions
+- **IAM Users** - Create users, manage credentials, and configure bucket permissions
+- **Multi-tenant** - Login with S3 access key/secret key credentials
+
+## Tech Stack
+
+- Next.js 16 (App Router)
+- TypeScript
+- MUI v6 (Material Design)
+- TanStack Query v5
+- AWS SDK for JavaScript v3
+
+## Requirements
+
+- Node.js 18+
+- SeaweedFS with S3 and Filer enabled
 
 ## Getting Started
 
-First, run the development server:
+### 1. Configure environment
+
+```bash
+cp .env.example .env.local
+```
+
+Edit `.env.local`:
+
+```env
+SESSION_SECRET=your-32-char-secret-key-here
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Run development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 4. Login
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Enter your SeaweedFS credentials:
 
-## Learn More
+| Field | Description | Example |
+|-------|-------------|---------|
+| S3 Endpoint | SeaweedFS S3 gateway URL | `http://localhost:8333` |
+| Filer Endpoint | SeaweedFS Filer URL (for IAM) | `http://localhost:8888` |
+| Access Key | S3 access key | `admin` |
+| Secret Key | S3 secret key | `admin123` |
 
-To learn more about Next.js, take a look at the following resources:
+## SeaweedFS Setup
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Docker Compose
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```yaml
+services:
+  seaweedfs:
+    image: chrislusf/seaweedfs
+    ports:
+      - "9333:9333"   # master
+      - "8080:8080"   # volume
+      - "8888:8888"   # filer
+      - "8333:8333"   # s3
+    command: "server -s3 -filer"
+    volumes:
+      - seaweedfs_data:/data
 
-## Deploy on Vercel
+volumes:
+  seaweedfs_data:
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Create initial admin user
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+curl -X PUT "http://localhost:8888/etc/iam/identity.json" \
+  -H "Content-Type: application/json" \
+  -d '{
+  "identities": [
+    {
+      "name": "admin",
+      "credentials": [
+        {
+          "accessKey": "admin",
+          "secretKey": "admin123"
+        }
+      ],
+      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+    }
+  ]
+}'
+```
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run start` | Start production server |
+| `npm run lint` | Run ESLint |
+| `npm run test` | Run unit tests (Vitest) |
+| `npm run test:e2e` | Run E2E tests (Playwright) |
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── (auth)/login/        # Login page
+│   ├── (dashboard)/         # Protected pages
+│   │   ├── buckets/         # Bucket list and file browser
+│   │   ├── users/           # IAM user management
+│   │   └── settings/        # Connection settings
+│   └── api/                 # API routes
+│       ├── auth/            # Authentication
+│       ├── s3/              # S3 operations
+│       └── iam/             # IAM operations
+├── components/
+│   ├── buckets/             # Bucket components
+│   ├── file-browser/        # File browser components
+│   ├── upload/              # Upload components
+│   ├── users/               # User management components
+│   └── layout/              # Layout components
+├── hooks/                   # React Query hooks
+├── lib/
+│   ├── auth.ts              # Session management
+│   ├── s3/                  # S3 client and operations
+│   └── iam/                 # IAM client and operations
+└── types/                   # TypeScript types
+```
+
+## License
+
+MIT
