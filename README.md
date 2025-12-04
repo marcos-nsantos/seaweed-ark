@@ -2,13 +2,17 @@
 
 Web UI for managing S3-compatible object storage (SeaweedFS).
 
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+
 ## Features
 
-- **File Browser** - Navigate, upload, download, rename, and delete files
-- **Bucket Management** - Create, delete, and configure buckets
-- **Versioning** - Enable/disable bucket versioning, view and download previous versions
+- **File Browser** - Navigate, upload, download, rename, copy, and delete files
+- **Sharing** - Generate presigned URLs with configurable expiration
+- **Bucket Management** - Create, delete, and configure buckets with list/grid views
+- **Versioning** - Enable/disable bucket versioning, view and restore previous versions
 - **IAM Users** - Create users, manage credentials, and configure bucket permissions
 - **Multi-tenant** - Login with S3 access key/secret key credentials
+- **Responsive** - Works on desktop and mobile devices
 
 ## Tech Stack
 
@@ -18,12 +22,43 @@ Web UI for managing S3-compatible object storage (SeaweedFS).
 - TanStack Query v5
 - AWS SDK for JavaScript v3
 
-## Requirements
+## Quick Start with Docker
 
-- Node.js 18+
+### Full Stack (Argos + SeaweedFS)
+
+```bash
+# Clone and start
+git clone <repo-url>
+cd argos-ui
+docker compose up -d
+
+# Access
+open http://localhost:3000
+```
+
+Default credentials:
+- **S3 Endpoint**: `http://localhost:8333`
+- **Filer Endpoint**: `http://localhost:8888`
+- **Access Key**: `admin`
+- **Secret Key**: `admin123`
+
+### Development (SeaweedFS only)
+
+```bash
+# Start SeaweedFS services
+docker compose -f docker-compose.dev.yml up -d
+
+# Run Next.js locally
+npm install
+npm run dev
+```
+
+## Manual Setup
+
+### Requirements
+
+- Node.js 20+
 - SeaweedFS with S3 and Filer enabled
-
-## Getting Started
 
 ### 1. Configure environment
 
@@ -34,61 +69,52 @@ cp .env.example .env.local
 Edit `.env.local`:
 
 ```env
-SESSION_SECRET=your-32-char-secret-key-here
+AUTH_SECRET=your-secret-key-min-32-characters-long
 ```
 
-### 2. Install dependencies
+### 2. Install and run
 
 ```bash
 npm install
-```
-
-### 3. Run development server
-
-```bash
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
 
-### 4. Login
+## Docker
 
-Enter your SeaweedFS credentials:
-
-| Field | Description | Example |
-|-------|-------------|---------|
-| S3 Endpoint | SeaweedFS S3 gateway URL | `http://localhost:8333` |
-| Filer Endpoint | SeaweedFS Filer URL (for IAM) | `http://localhost:8888` |
-| Access Key | S3 access key | `admin` |
-| Secret Key | S3 secret key | `admin123` |
-
-## SeaweedFS Setup
-
-### Docker Compose
-
-```yaml
-services:
-  seaweedfs:
-    image: chrislusf/seaweedfs
-    ports:
-      - "9333:9333"   # master
-      - "8080:8080"   # volume
-      - "8888:8888"   # filer
-      - "8333:8333"   # s3
-    command: "server -s3 -filer"
-    volumes:
-      - seaweedfs_data:/data
-
-volumes:
-  seaweedfs_data:
-```
-
-### Create initial admin user
+### Build image
 
 ```bash
-curl -X PUT "http://localhost:8888/etc/iam/identity.json" \
-  -H "Content-Type: application/json" \
-  -d '{
+docker build -t argos-ui .
+```
+
+### Run container
+
+```bash
+docker run -p 3000:3000 \
+  -e AUTH_SECRET="your-secret-key-min-32-characters-long" \
+  argos-ui
+```
+
+## Services & Ports
+
+| Service | Port | Description |
+|---------|------|-------------|
+| Argos UI | 3000 | Web interface |
+| S3 Gateway | 8333 | S3-compatible API |
+| Filer | 8888 | SeaweedFS Filer (IAM) |
+| Master | 9333 | SeaweedFS Master |
+| Volume | 8080 | SeaweedFS Volume Server |
+
+## Configuration
+
+### SeaweedFS S3 Credentials
+
+Edit `seaweedfs/s3.json` to configure users:
+
+```json
+{
   "identities": [
     {
       "name": "admin",
@@ -98,11 +124,17 @@ curl -X PUT "http://localhost:8888/etc/iam/identity.json" \
           "secretKey": "admin123"
         }
       ],
-      "actions": ["Admin", "Read", "Write", "List", "Tagging"]
+      "actions": ["Admin", "Read", "List", "Tagging", "Write"]
     }
   ]
-}'
+}
 ```
+
+### Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `AUTH_SECRET` | Yes | 32+ char secret for session encryption |
 
 ## Scripts
 
