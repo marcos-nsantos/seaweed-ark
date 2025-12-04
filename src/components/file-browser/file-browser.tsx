@@ -46,6 +46,7 @@ import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { FilePreviewModal } from './file-preview-modal';
 import { RenameDialog } from './rename-dialog';
 import { VersionsDialog } from './versions-dialog';
+import { CopyDialog } from './copy-dialog';
 import type { S3Object } from '@/types/s3';
 
 type FileBrowserProps = {
@@ -69,6 +70,7 @@ export function FileBrowser({ bucket, path, onNavigate }: FileBrowserProps) {
   const [previewFile, setPreviewFile] = useState<S3Object | null>(null);
   const [renameTarget, setRenameTarget] = useState<S3Object | null>(null);
   const [versionsTarget, setVersionsTarget] = useState<S3Object | null>(null);
+  const [copyTarget, setCopyTarget] = useState<S3Object | null>(null);
 
   const { uploads, isUploading, uploadFiles, clearAll } = useUpload({
     bucket,
@@ -163,9 +165,8 @@ export function FileBrowser({ bucket, path, onNavigate }: FileBrowserProps) {
     setRenameTarget(file);
   };
 
-  const handleCopy = (_file: S3Object) => {
-    // TODO: Implement copy dialog
-    toast.info('Copy coming soon');
+  const handleCopy = (file: S3Object) => {
+    setCopyTarget(file);
   };
 
   const handleVersions = (file: S3Object) => {
@@ -400,6 +401,14 @@ export function FileBrowser({ bucket, path, onNavigate }: FileBrowserProps) {
         open={!!versionsTarget}
         onClose={() => setVersionsTarget(null)}
         file={versionsTarget}
+        bucket={bucket}
+      />
+
+      {/* Copy Dialog */}
+      <CopyDialog
+        open={!!copyTarget}
+        onClose={() => setCopyTarget(null)}
+        file={copyTarget}
         bucket={bucket}
       />
     </Box>
