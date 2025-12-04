@@ -4,6 +4,7 @@ export type S3Object = {
   lastModified: Date;
   etag?: string;
   isFolder: boolean;
+  isDeleted?: boolean;
 };
 
 export type S3Bucket = {
