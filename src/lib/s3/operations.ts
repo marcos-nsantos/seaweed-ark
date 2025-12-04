@@ -15,6 +15,9 @@ import {
 } from '@aws-sdk/client-s3';
 import type { S3Client, ObjectCannedACL } from '@aws-sdk/client-s3';
 import type { S3Bucket, S3Object, S3ListObjectsResponse, S3ObjectVersion, S3ObjectAcl } from '@/types/s3';
+import { FolderNotEmptyError } from '@/lib/errors';
+
+const LIST_VERSIONS_PAGE_SIZE = 1000;
 
 export async function listBuckets(client: S3Client): Promise<S3Bucket[]> {
   const response = await client.send(new ListBucketsCommand({}));
@@ -50,60 +53,131 @@ export async function listObjects(
   prefix?: string,
   continuationToken?: string
 ): Promise<S3ListObjectsResponse> {
-  const response = await client.send(
-    new ListObjectsV2Command({
+  // Use ListObjectVersionsCommand only - more reliable with SeaweedFS
+  const versionsResponse = await client.send(
+    new ListObjectVersionsCommand({
       Bucket: bucket,
       Prefix: prefix,
-      Delimiter: '/',
-      ContinuationToken: continuationToken,
-      MaxKeys: 100,
+      KeyMarker: continuationToken,
+      MaxKeys: LIST_VERSIONS_PAGE_SIZE,
     })
   );
 
-  // Deduplicate by key (SeaweedFS bug workaround) - keep the most recent version
-  const deduplicatedContents = response.Contents
-    ? Array.from(
-        response.Contents.reduce((map, obj) => {
-          const existing = map.get(obj.Key ?? '');
-          if (
-            !existing ||
-            (obj.LastModified && existing.LastModified && obj.LastModified > existing.LastModified)
-          ) {
-            map.set(obj.Key ?? '', obj);
-          }
-          return map;
-        }, new Map<string, (typeof response.Contents)[number]>()).values()
-      )
-    : [];
+  // Build set of keys that have delete marker as latest version
+  const deletedKeys = new Set<string>();
+  versionsResponse.DeleteMarkers?.forEach((marker) => {
+    if (marker.IsLatest && marker.Key) {
+      deletedKeys.add(marker.Key);
+    }
+  });
 
-  const objects: S3Object[] = deduplicatedContents
-    .filter((obj) => obj.Key !== prefix)
-    .map((obj) => ({
-      key: obj.Key ?? '',
-      size: obj.Size ?? 0,
-      lastModified: obj.LastModified ?? new Date(),
-      etag: obj.ETag,
-      isFolder: false,
-    }));
+  // Process versions - simulate delimiter manually
+  const prefixLen = prefix?.length ?? 0;
+  const folderSet = new Set<string>();
+  const fileMap = new Map<string, { size: number; lastModified: Date; etag?: string; isDeleted: boolean }>();
 
-  const prefixes = response.CommonPrefixes?.map((p) => p.Prefix ?? '').filter(Boolean) ?? [];
+  // Index versions by key for O(1) lookup when processing delete markers
+  const versionsByKey = new Map<string, { size: number; etag?: string }>();
+  versionsResponse.Versions?.forEach((v) => {
+    if (v.Key && !versionsByKey.has(v.Key)) {
+      versionsByKey.set(v.Key, { size: v.Size ?? 0, etag: v.ETag });
+    }
+  });
 
+  // Process active versions
+  versionsResponse.Versions?.forEach((version) => {
+    if (!version.Key || !version.IsLatest) return;
+    if (version.Key === prefix) return;
+
+    const relativePath = version.Key.slice(prefixLen);
+    const slashIndex = relativePath.indexOf('/');
+
+    if (slashIndex === -1) {
+      // Direct file (no slash in relative path)
+      fileMap.set(version.Key, {
+        size: version.Size ?? 0,
+        lastModified: version.LastModified ?? new Date(),
+        etag: version.ETag,
+        isDeleted: deletedKeys.has(version.Key),
+      });
+    } else {
+      // Folder - extract the folder prefix
+      const folderPrefix = (prefix ?? '') + relativePath.slice(0, slashIndex + 1);
+      folderSet.add(folderPrefix);
+    }
+  });
+
+  // Process delete markers for deleted files
+  versionsResponse.DeleteMarkers?.forEach((marker) => {
+    if (!marker.Key || !marker.IsLatest) return;
+    if (marker.Key === prefix) return;
+
+    const relativePath = marker.Key.slice(prefixLen);
+    const slashIndex = relativePath.indexOf('/');
+
+    if (slashIndex === -1) {
+      // Direct deleted file
+      if (!fileMap.has(marker.Key)) {
+        const previousVersion = versionsByKey.get(marker.Key);
+        fileMap.set(marker.Key, {
+          size: previousVersion?.size ?? 0,
+          lastModified: marker.LastModified ?? new Date(),
+          etag: previousVersion?.etag,
+          isDeleted: true,
+        });
+      }
+    } else {
+      // Deleted item in subfolder - still show the folder
+      const folderPrefix = (prefix ?? '') + relativePath.slice(0, slashIndex + 1);
+      folderSet.add(folderPrefix);
+    }
+  });
+
+  // Convert to arrays
+  const objects: S3Object[] = Array.from(fileMap.entries()).map(([key, info]) => ({
+    key,
+    size: info.size,
+    lastModified: info.lastModified,
+    etag: info.etag,
+    isFolder: false,
+    isDeleted: info.isDeleted,
+  }));
+
+  const prefixes = Array.from(folderSet);
   const folders: S3Object[] = prefixes.map((p) => ({
     key: p,
     size: 0,
     lastModified: new Date(),
     isFolder: true,
+    isDeleted: false,
   }));
 
   return {
     objects: [...folders, ...objects],
     prefixes,
-    isTruncated: response.IsTruncated ?? false,
-    continuationToken: response.NextContinuationToken,
+    isTruncated: versionsResponse.IsTruncated ?? false,
+    continuationToken: versionsResponse.NextKeyMarker,
   };
 }
 
 export async function deleteObject(client: S3Client, bucket: string, key: string): Promise<void> {
+  // If it's a folder, check if it's empty first
+  if (key.endsWith('/')) {
+    const contents = await client.send(
+      new ListObjectsV2Command({
+        Bucket: bucket,
+        Prefix: key,
+        MaxKeys: 2, // We only need to know if there's more than the folder itself
+      })
+    );
+
+    // Check if there are any objects inside (excluding the folder placeholder itself)
+    const hasContents = contents.Contents?.some((obj) => obj.Key !== key);
+    if (hasContents) {
+      throw new FolderNotEmptyError();
+    }
+  }
+
   await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
 }
 
