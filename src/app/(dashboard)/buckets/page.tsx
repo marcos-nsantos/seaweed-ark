@@ -2,11 +2,32 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Typography, Box, Button, Grid, Skeleton, Alert } from '@mui/material';
-import { Add as AddIcon } from '@mui/icons-material';
+import {
+  Typography,
+  Box,
+  Button,
+  Grid,
+  Skeleton,
+  Alert,
+  ToggleButtonGroup,
+  ToggleButton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+} from '@mui/material';
+import {
+  Add as AddIcon,
+  GridView as GridViewIcon,
+  ViewList as ListViewIcon,
+} from '@mui/icons-material';
 import { toast } from 'sonner';
 import { useBuckets, useCreateBucket, useDeleteBucket } from '@/hooks/use-buckets';
 import { BucketCard } from '@/components/buckets/bucket-card';
+import { BucketRow } from '@/components/buckets/bucket-row';
 import { CreateBucketDialog } from '@/components/buckets/create-bucket-dialog';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import type { S3Bucket } from '@/types/s3';
@@ -17,6 +38,7 @@ export default function BucketsPage() {
   const createBucket = useCreateBucket();
   const deleteBucket = useDeleteBucket();
 
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<S3Bucket | null>(null);
 
@@ -54,13 +76,28 @@ export default function BucketsPage() {
         <Typography variant="h4" component="h1" fontWeight="bold">
           Buckets
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setCreateDialogOpen(true)}
-        >
-          Create Bucket
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={(_, v) => v && setViewMode(v)}
+            size="small"
+          >
+            <ToggleButton value="list">
+              <ListViewIcon />
+            </ToggleButton>
+            <ToggleButton value="grid">
+              <GridViewIcon />
+            </ToggleButton>
+          </ToggleButtonGroup>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setCreateDialogOpen(true)}
+          >
+            Create Bucket
+          </Button>
+        </Box>
       </Box>
 
       {error && (
@@ -70,21 +107,69 @@ export default function BucketsPage() {
       )}
 
       {isLoading ? (
-        <Grid container spacing={2}>
-          {[1, 2, 3, 4].map((i) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={i}>
-              <Skeleton variant="rounded" height={100} />
-            </Grid>
-          ))}
-        </Grid>
+        viewMode === 'grid' ? (
+          <Grid container spacing={2}>
+            {[1, 2, 3, 4].map((i) => (
+              <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={i}>
+                <Skeleton variant="rounded" height={100} />
+              </Grid>
+            ))}
+          </Grid>
+        ) : (
+          <TableContainer component={Paper}>
+            <Table>
+              <TableBody>
+                {[1, 2, 3, 4].map((i) => (
+                  <TableRow key={i}>
+                    <TableCell>
+                      <Skeleton width="40%" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton width={100} />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton width={80} />
+                    </TableCell>
+                    <TableCell />
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )
       ) : buckets && buckets.length > 0 ? (
-        <Grid container spacing={2}>
-          {buckets.map((bucket) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={bucket.name}>
-              <BucketCard bucket={bucket} onOpen={handleOpenBucket} onDelete={setDeleteTarget} />
-            </Grid>
-          ))}
-        </Grid>
+        viewMode === 'grid' ? (
+          <Grid container spacing={2}>
+            {buckets.map((bucket) => (
+              <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={bucket.name}>
+                <BucketCard bucket={bucket} onOpen={handleOpenBucket} onDelete={setDeleteTarget} />
+              </Grid>
+            ))}
+          </Grid>
+        ) : (
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Created</TableCell>
+                  <TableCell>Versioning</TableCell>
+                  <TableCell align="right" />
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {buckets.map((bucket) => (
+                  <BucketRow
+                    key={bucket.name}
+                    bucket={bucket}
+                    onOpen={handleOpenBucket}
+                    onDelete={setDeleteTarget}
+                  />
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )
       ) : (
         <Box
           sx={{
