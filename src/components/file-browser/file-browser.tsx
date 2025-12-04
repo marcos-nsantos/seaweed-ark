@@ -37,6 +37,7 @@ import {
 import { toast } from 'sonner';
 import { useObjects, useCreateFolder, useDeleteObject } from '@/hooks/use-s3-objects';
 import { useUpload } from '@/hooks/use-upload';
+import { useFilesViewMode } from '@/hooks/use-view-preference';
 import { BreadcrumbNav } from './breadcrumb-nav';
 import { FileRow } from './file-row';
 import { FileGrid } from './file-grid';
@@ -62,9 +63,9 @@ export function FileBrowser({ bucket, path, onNavigate }: FileBrowserProps) {
     useObjects(bucket, prefix);
   const createFolder = useCreateFolder();
   const deleteObject = useDeleteObject();
+  const { viewMode, setViewMode } = useFilesViewMode();
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
   const [showUpload, setShowUpload] = useState(false);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');

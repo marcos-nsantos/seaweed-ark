@@ -26,6 +26,7 @@ import {
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { useBuckets, useCreateBucket, useDeleteBucket } from '@/hooks/use-buckets';
+import { useBucketsViewMode } from '@/hooks/use-view-preference';
 import { BucketCard } from '@/components/buckets/bucket-card';
 import { BucketRow } from '@/components/buckets/bucket-row';
 import { CreateBucketDialog } from '@/components/buckets/create-bucket-dialog';
@@ -37,8 +38,8 @@ export default function BucketsPage() {
   const { data: buckets, isLoading, error } = useBuckets();
   const createBucket = useCreateBucket();
   const deleteBucket = useDeleteBucket();
+  const { viewMode, setViewMode } = useBucketsViewMode();
 
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<S3Bucket | null>(null);
 
