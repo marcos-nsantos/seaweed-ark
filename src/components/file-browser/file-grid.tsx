@@ -23,6 +23,7 @@ import {
   Delete as DeleteIcon,
   DriveFileRenameOutline as RenameIcon,
   ContentCopy as CopyIcon,
+  DriveFileMove as MoveIcon,
   History as HistoryIcon,
   Share as ShareIcon,
 } from '@mui/icons-material';
@@ -39,6 +40,7 @@ type FileGridProps = {
   onDelete: (file: S3Object) => void;
   onRename: (file: S3Object) => void;
   onCopy: (file: S3Object) => void;
+  onMove: (file: S3Object) => void;
   onVersions: (file: S3Object) => void;
   onShare: (file: S3Object) => void;
 };
@@ -68,6 +70,7 @@ export function FileGrid({
   onDelete,
   onRename,
   onCopy,
+  onMove,
   onVersions,
   onShare,
 }: FileGridProps) {
@@ -213,6 +216,12 @@ export function FileGrid({
             <CopyIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>Copy</ListItemText>
+        </MenuItem>
+        <MenuItem onClick={() => handleAction(onMove)}>
+          <ListItemIcon>
+            <MoveIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Move</ListItemText>
         </MenuItem>
         <MenuItem onClick={() => handleAction(onDelete)} sx={{ color: 'error.main' }}>
           <ListItemIcon>

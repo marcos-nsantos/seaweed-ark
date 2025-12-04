@@ -242,3 +242,44 @@ export function useSetObjectAcl() {
     },
   });
 }
+
+type MoveObjectParams = {
+  sourceBucket: string;
+  sourceKey: string;
+  destBucket: string;
+  destKey: string;
+};
+
+async function moveObject(params: MoveObjectParams): Promise<void> {
+  // Copy to destination
+  await copyObject({
+    sourceBucket: params.sourceBucket,
+    sourceKey: params.sourceKey,
+    destBucket: params.destBucket,
+    destKey: params.destKey,
+  });
+
+  // Delete source
+  await deleteObject({
+    bucket: params.sourceBucket,
+    key: params.sourceKey,
+  });
+}
+
+export function useMoveObject() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: moveObject,
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.objects.list(variables.sourceBucket),
+      });
+      if (variables.destBucket !== variables.sourceBucket) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.objects.list(variables.destBucket),
+        });
+      }
+    },
+  });
+}

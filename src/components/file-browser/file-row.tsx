@@ -22,6 +22,7 @@ import {
   Delete as DeleteIcon,
   DriveFileRenameOutline as RenameIcon,
   ContentCopy as CopyIcon,
+  DriveFileMove as MoveIcon,
   History as HistoryIcon,
   Share as ShareIcon,
 } from '@mui/icons-material';
@@ -38,6 +39,7 @@ type FileRowProps = {
   onDelete: (file: S3Object) => void;
   onRename: (file: S3Object) => void;
   onCopy: (file: S3Object) => void;
+  onMove: (file: S3Object) => void;
   onVersions: (file: S3Object) => void;
   onShare: (file: S3Object) => void;
 };
@@ -75,6 +77,7 @@ export function FileRow({
   onDelete,
   onRename,
   onCopy,
+  onMove,
   onVersions,
   onShare,
 }: FileRowProps) {
@@ -161,6 +164,13 @@ export function FileRow({
               <CopyIcon fontSize="small" />
             </ListItemIcon>
             <ListItemText>Copy</ListItemText>
+          </MenuItem>
+
+          <MenuItem onClick={handleAction(() => onMove(file))}>
+            <ListItemIcon>
+              <MoveIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Move</ListItemText>
           </MenuItem>
 
           <MenuItem onClick={handleAction(() => onDelete(file))} sx={{ color: 'error.main' }}>
