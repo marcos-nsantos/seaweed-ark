@@ -114,8 +114,10 @@ export function useDeleteObject() {
 
   return useMutation({
     mutationFn: deleteObject,
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({
+    onSuccess: async (_data, variables) => {
+      // Use resetQueries to clear cached data completely, ensuring deleted items
+      // don't appear stale while refetching
+      await queryClient.resetQueries({
         queryKey: queryKeys.objects.list(variables.bucket),
       });
     },
