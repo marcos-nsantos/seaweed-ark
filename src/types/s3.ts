@@ -35,3 +35,14 @@ export type S3ObjectVersion = {
   etag?: string;
   isDeleteMarker: boolean;
 };
+
+export type S3ObjectAcl = {
+  owner: string;
+  isPublic: boolean;
+  grants: {
+    grantee: string;
+    permission: string;
+  }[];
+};
+
+export type S3CannedAcl = 'private' | 'public-read' | 'public-read-write' | 'authenticated-read';

@@ -13,6 +13,8 @@ export const queryKeys = {
       [...queryKeys.objects.all, 'detail', bucket, key] as const,
     versions: (bucket: string, key: string) =>
       [...queryKeys.objects.all, 'versions', bucket, key] as const,
+    acl: (bucket: string, key: string) =>
+      [...queryKeys.objects.all, 'acl', bucket, key] as const,
   },
   users: {
     all: ['users'] as const,

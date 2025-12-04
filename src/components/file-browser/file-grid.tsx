@@ -24,6 +24,7 @@ import {
   DriveFileRenameOutline as RenameIcon,
   ContentCopy as CopyIcon,
   History as HistoryIcon,
+  Share as ShareIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { formatBytes, isImageFile, isPdfFile, getFileName } from '@/lib/utils';
@@ -39,6 +40,7 @@ type FileGridProps = {
   onRename: (file: S3Object) => void;
   onCopy: (file: S3Object) => void;
   onVersions: (file: S3Object) => void;
+  onShare: (file: S3Object) => void;
 };
 
 function getFileIcon(file: S3Object) {
@@ -67,6 +69,7 @@ export function FileGrid({
   onRename,
   onCopy,
   onVersions,
+  onShare,
 }: FileGridProps) {
   const [menuAnchor, setMenuAnchor] = useState<{
     element: HTMLElement | null;
@@ -185,6 +188,12 @@ export function FileGrid({
               <DownloadIcon fontSize="small" />
             </ListItemIcon>
             <ListItemText>Download</ListItemText>
+          </MenuItem>,
+          <MenuItem key="share" onClick={() => handleAction(onShare)}>
+            <ListItemIcon>
+              <ShareIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Share</ListItemText>
           </MenuItem>,
           <MenuItem key="versions" onClick={() => handleAction(onVersions)}>
             <ListItemIcon>

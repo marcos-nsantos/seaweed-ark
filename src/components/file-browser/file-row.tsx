@@ -23,6 +23,7 @@ import {
   DriveFileRenameOutline as RenameIcon,
   ContentCopy as CopyIcon,
   History as HistoryIcon,
+  Share as ShareIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { formatBytes, formatDate, isImageFile, isPdfFile } from '@/lib/utils';
@@ -38,6 +39,7 @@ type FileRowProps = {
   onRename: (file: S3Object) => void;
   onCopy: (file: S3Object) => void;
   onVersions: (file: S3Object) => void;
+  onShare: (file: S3Object) => void;
 };
 
 function getFileIcon(file: S3Object) {
@@ -74,6 +76,7 @@ export function FileRow({
   onRename,
   onCopy,
   onVersions,
+  onShare,
 }: FileRowProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const menuOpen = Boolean(anchorEl);
@@ -129,6 +132,13 @@ export function FileRow({
                 <DownloadIcon fontSize="small" />
               </ListItemIcon>
               <ListItemText>Download</ListItemText>
+            </MenuItem>,
+
+            <MenuItem key="share" onClick={handleAction(() => onShare(file))}>
+              <ListItemIcon>
+                <ShareIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Share</ListItemText>
             </MenuItem>,
 
             <MenuItem key="versions" onClick={handleAction(() => onVersions(file))}>

@@ -2,7 +2,7 @@
 
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/config/query-keys';
-import type { S3ListObjectsResponse, S3ObjectVersion } from '@/types/s3';
+import type { S3ListObjectsResponse, S3ObjectVersion, S3ObjectAcl, S3CannedAcl } from '@/types/s3';
 import type { ApiResponse } from '@/types/api';
 
 type ListObjectsParams = {
@@ -186,5 +186,59 @@ export function useObjectVersions(bucket: string, key: string | null) {
     queryKey: queryKeys.objects.versions(bucket, key ?? ''),
     queryFn: () => fetchObjectVersions(bucket, key!),
     enabled: !!bucket && !!key,
+  });
+}
+
+async function fetchObjectAcl(bucket: string, key: string): Promise<S3ObjectAcl> {
+  const response = await fetch(
+    `/api/s3/objects/${encodeURIComponent(key)}/acl?bucket=${encodeURIComponent(bucket)}`
+  );
+  const data: ApiResponse<S3ObjectAcl> = await response.json();
+
+  if (data.error) {
+    throw new Error(data.error.message);
+  }
+
+  return data.data;
+}
+
+export function useObjectAcl(bucket: string, key: string | null) {
+  return useQuery({
+    queryKey: queryKeys.objects.acl(bucket, key ?? ''),
+    queryFn: () => fetchObjectAcl(bucket, key!),
+    enabled: !!bucket && !!key,
+  });
+}
+
+type SetObjectAclParams = {
+  bucket: string;
+  key: string;
+  acl: S3CannedAcl;
+};
+
+async function setObjectAcl(params: SetObjectAclParams): Promise<void> {
+  const response = await fetch(`/api/s3/objects/${encodeURIComponent(params.key)}/acl`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ bucket: params.bucket, acl: params.acl }),
+  });
+
+  const data: ApiResponse<{ success: boolean }> = await response.json();
+
+  if (data.error) {
+    throw new Error(data.error.message);
+  }
+}
+
+export function useSetObjectAcl() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: setObjectAcl,
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.objects.acl(variables.bucket, variables.key),
+      });
+    },
   });
 }

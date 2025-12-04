@@ -10,9 +10,11 @@ import {
   GetBucketVersioningCommand,
   PutBucketVersioningCommand,
   ListObjectVersionsCommand,
+  GetObjectAclCommand,
+  PutObjectAclCommand,
 } from '@aws-sdk/client-s3';
-import type { S3Client } from '@aws-sdk/client-s3';
-import type { S3Bucket, S3Object, S3ListObjectsResponse, S3ObjectVersion } from '@/types/s3';
+import type { S3Client, ObjectCannedACL } from '@aws-sdk/client-s3';
+import type { S3Bucket, S3Object, S3ListObjectsResponse, S3ObjectVersion, S3ObjectAcl } from '@/types/s3';
 
 export async function listBuckets(client: S3Client): Promise<S3Bucket[]> {
   const response = await client.send(new ListBucketsCommand({}));
@@ -239,4 +241,49 @@ export async function listObjectVersions(
   versions.sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime());
 
   return versions;
+}
+
+export async function getObjectAcl(
+  client: S3Client,
+  bucket: string,
+  key: string
+): Promise<S3ObjectAcl> {
+  const response = await client.send(
+    new GetObjectAclCommand({
+      Bucket: bucket,
+      Key: key,
+    })
+  );
+
+  // Determine if public based on grants
+  const isPublic = response.Grants?.some(
+    (grant) =>
+      grant.Grantee?.URI === 'http://acs.amazonaws.com/groups/global/AllUsers' ||
+      grant.Grantee?.URI === 'http://acs.amazonaws.com/groups/global/AuthenticatedUsers'
+  );
+
+  return {
+    owner: response.Owner?.DisplayName ?? response.Owner?.ID ?? 'unknown',
+    isPublic: isPublic ?? false,
+    grants:
+      response.Grants?.map((grant) => ({
+        grantee: grant.Grantee?.DisplayName ?? grant.Grantee?.URI ?? grant.Grantee?.ID ?? 'unknown',
+        permission: grant.Permission ?? 'UNKNOWN',
+      })) ?? [],
+  };
+}
+
+export async function setObjectAcl(
+  client: S3Client,
+  bucket: string,
+  key: string,
+  acl: ObjectCannedACL
+): Promise<void> {
+  await client.send(
+    new PutObjectAclCommand({
+      Bucket: bucket,
+      Key: key,
+      ACL: acl,
+    })
+  );
 }

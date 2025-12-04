@@ -47,6 +47,7 @@ import { FilePreviewModal } from './file-preview-modal';
 import { RenameDialog } from './rename-dialog';
 import { VersionsDialog } from './versions-dialog';
 import { CopyDialog } from './copy-dialog';
+import { ShareDialog } from './share-dialog';
 import type { S3Object } from '@/types/s3';
 
 type FileBrowserProps = {
@@ -72,6 +73,7 @@ export function FileBrowser({ bucket, path, onNavigate }: FileBrowserProps) {
   const [renameTarget, setRenameTarget] = useState<S3Object | null>(null);
   const [versionsTarget, setVersionsTarget] = useState<S3Object | null>(null);
   const [copyTarget, setCopyTarget] = useState<S3Object | null>(null);
+  const [shareTarget, setShareTarget] = useState<S3Object | null>(null);
 
   const { uploads, isUploading, uploadFiles, clearAll } = useUpload({
     bucket,
@@ -173,6 +175,10 @@ export function FileBrowser({ bucket, path, onNavigate }: FileBrowserProps) {
 
   const handleVersions = (file: S3Object) => {
     setVersionsTarget(file);
+  };
+
+  const handleShare = (file: S3Object) => {
+    setShareTarget(file);
   };
 
   return (
@@ -290,6 +296,7 @@ export function FileBrowser({ bucket, path, onNavigate }: FileBrowserProps) {
             onRename={handleRename}
             onCopy={handleCopy}
             onVersions={handleVersions}
+            onShare={handleShare}
           />
         ) : (
           <TableContainer component={Paper}>
@@ -322,6 +329,7 @@ export function FileBrowser({ bucket, path, onNavigate }: FileBrowserProps) {
                     onRename={handleRename}
                     onCopy={handleCopy}
                     onVersions={handleVersions}
+                    onShare={handleShare}
                   />
                 ))}
               </TableBody>
@@ -420,6 +428,14 @@ export function FileBrowser({ bucket, path, onNavigate }: FileBrowserProps) {
         open={!!copyTarget}
         onClose={() => setCopyTarget(null)}
         file={copyTarget}
+        bucket={bucket}
+      />
+
+      {/* Share Dialog */}
+      <ShareDialog
+        open={!!shareTarget}
+        onClose={() => setShareTarget(null)}
+        file={shareTarget}
         bucket={bucket}
       />
     </Box>
