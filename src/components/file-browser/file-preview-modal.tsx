@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import {
   Dialog,
   DialogTitle,
@@ -35,16 +36,7 @@ export function FilePreviewModal({ open, onClose, file, bucket }: FilePreviewMod
   const [loading, setLoading] = useState(false);
   const [zoom, setZoom] = useState(1);
 
-  useEffect(() => {
-    if (open && file && !file.isFolder) {
-      loadPreview();
-    } else {
-      setPreviewUrl(null);
-      setZoom(1);
-    }
-  }, [open, file]);
-
-  const loadPreview = async () => {
+  const loadPreview = useCallback(async () => {
     if (!file) return;
 
     setLoading(true);
@@ -72,7 +64,16 @@ export function FilePreviewModal({ open, onClose, file, bucket }: FilePreviewMod
     } finally {
       setLoading(false);
     }
-  };
+  }, [file, bucket]);
+
+  useEffect(() => {
+    if (open && file && !file.isFolder) {
+      loadPreview();
+    } else {
+      setPreviewUrl(null);
+      setZoom(1);
+    }
+  }, [open, file, loadPreview]);
 
   const handleDownload = () => {
     if (previewUrl) {
@@ -159,14 +160,15 @@ export function FilePreviewModal({ open, onClose, file, bucket }: FilePreviewMod
               justifyContent: 'center',
               width: '100%',
               overflow: 'auto',
+              position: 'relative',
             }}
           >
-            <img
+            <Image
               src={previewUrl}
               alt={fileName}
+              fill
+              unoptimized
               style={{
-                maxWidth: '100%',
-                maxHeight: '100%',
                 objectFit: 'contain',
                 transform: `scale(${zoom})`,
                 transition: 'transform 0.2s',
