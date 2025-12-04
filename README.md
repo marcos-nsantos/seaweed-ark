@@ -6,7 +6,9 @@ Web UI for managing S3-compatible object storage (SeaweedFS).
 
 ## Features
 
-- **File Browser** - Navigate, upload, download, rename, copy, and delete files
+- **File Browser** - Navigate, upload, download, rename, copy, move, and delete files
+- **Search & Filter** - Real-time search to filter files by name
+- **Bulk Operations** - Select and delete multiple files at once
 - **Sharing** - Generate presigned URLs with configurable expiration
 - **Bucket Management** - Create, delete, and configure buckets with list/grid views
 - **Versioning** - Enable/disable bucket versioning, view and restore previous versions
@@ -28,8 +30,8 @@ Web UI for managing S3-compatible object storage (SeaweedFS).
 
 ```bash
 # Clone and start
-git clone <repo-url>
-cd ark-ui
+git clone https://github.com/marcos-nsantos/seaweed-ark.git
+cd seaweed-ark
 docker compose up -d
 
 # Access
@@ -86,7 +88,7 @@ Open [http://localhost:3000](http://localhost:3000)
 ### Build image
 
 ```bash
-docker build -t ark-ui .
+docker build -t seaweed-ark .
 ```
 
 ### Run container
@@ -94,7 +96,7 @@ docker build -t ark-ui .
 ```bash
 docker run -p 3000:3000 \
   -e AUTH_SECRET="your-secret-key-min-32-characters-long" \
-  ark-ui
+  seaweed-ark
 ```
 
 ## Services & Ports
