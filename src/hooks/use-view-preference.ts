@@ -9,7 +9,7 @@ type ViewPreferences = {
   files: ViewMode;
 };
 
-const STORAGE_KEY = 'argos_view_preferences';
+const STORAGE_KEY = 'ark_view_preferences';
 
 const DEFAULT_PREFERENCES: ViewPreferences = {
   buckets: 'grid',

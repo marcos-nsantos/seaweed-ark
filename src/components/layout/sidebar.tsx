@@ -61,9 +61,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const drawerContent = (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-        <Image src="/logo.png" alt="Argos" width={32} height={32} />
+        <Image src="/logo.png" alt="Ark" width={32} height={32} />
         <Typography variant="h6" fontWeight="bold">
-          Argos
+          Ark
         </Typography>
       </Box>
 

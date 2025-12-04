@@ -1,6 +1,6 @@
 services:
-  # Argos UI
-  argos:
+  # Ark UI
+  ark:
     build: .
     ports:
       - "3000:3000"

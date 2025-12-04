@@ -1,4 +1,4 @@
-# Argos
+# Ark
 
 Web UI for managing S3-compatible object storage (SeaweedFS).
 
@@ -24,12 +24,12 @@ Web UI for managing S3-compatible object storage (SeaweedFS).
 
 ## Quick Start with Docker
 
-### Full Stack (Argos + SeaweedFS)
+### Full Stack (Ark + SeaweedFS)
 
 ```bash
 # Clone and start
 git clone <repo-url>
-cd argos-ui
+cd ark-ui
 docker compose up -d
 
 # Access
@@ -86,7 +86,7 @@ Open [http://localhost:3000](http://localhost:3000)
 ### Build image
 
 ```bash
-docker build -t argos-ui .
+docker build -t ark-ui .
 ```
 
 ### Run container
@@ -94,14 +94,14 @@ docker build -t argos-ui .
 ```bash
 docker run -p 3000:3000 \
   -e AUTH_SECRET="your-secret-key-min-32-characters-long" \
-  argos-ui
+  ark-ui
 ```
 
 ## Services & Ports
 
 | Service | Port | Description |
 |---------|------|-------------|
-| Argos UI | 3000 | Web interface |
+| Ark UI | 3000 | Web interface |
 | S3 Gateway | 8333 | S3-compatible API |
 | Filer | 8888 | SeaweedFS Filer (IAM) |
 | Master | 9333 | SeaweedFS Master |

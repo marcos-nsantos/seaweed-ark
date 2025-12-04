@@ -88,10 +88,10 @@ export default function LoginPage() {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-            <Image src="/logo.png" alt="Argos" width={48} height={48} />
+            <Image src="/logo.png" alt="Ark" width={48} height={48} />
             <Box>
               <Typography variant="h4" component="h1" fontWeight="bold">
-                Argos
+                Ark
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Connect to your S3 storage

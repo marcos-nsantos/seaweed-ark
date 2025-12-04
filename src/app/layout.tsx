@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Argos - S3 Storage Manager',
+  title: 'Ark - S3 Storage Manager',
   description: 'Web UI for managing SeaweedFS S3-compatible object storage',
 };
 

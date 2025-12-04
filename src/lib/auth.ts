@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 
-const COOKIE_NAME = 'argos_session';
+const COOKIE_NAME = 'ark_session';
 const ALGORITHM = 'aes-256-gcm';
 
 type SessionData = {
