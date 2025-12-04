@@ -141,7 +141,7 @@ export default function SettingsPage() {
       </Paper>
 
       <Typography variant="body2" color="text.secondary" sx={{ mt: 4, textAlign: 'center' }}>
-        Argos v0.1.0
+        Ark v0.1.0
       </Typography>
     </Box>
   );
