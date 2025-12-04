@@ -1,0 +1,67 @@
+services:
+  # Argos UI
+  argos:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - AUTH_SECRET=your-secret-key-min-32-characters-long
+    depends_on:
+      - seaweedfs-s3
+    restart: unless-stopped
+
+  # SeaweedFS Master
+  seaweedfs-master:
+    image: chrislusf/seaweedfs:latest
+    command: master -ip=seaweedfs-master -ip.bind=0.0.0.0
+    ports:
+      - "9333:9333"   # Master HTTP
+      - "19333:19333" # Master gRPC
+    volumes:
+      - seaweedfs-master-data:/data
+    restart: unless-stopped
+
+  # SeaweedFS Volume Server
+  seaweedfs-volume:
+    image: chrislusf/seaweedfs:latest
+    command: volume -mserver=seaweedfs-master:9333 -ip.bind=0.0.0.0 -port=8080
+    ports:
+      - "8080:8080"   # Volume HTTP
+      - "18080:18080" # Volume gRPC
+    volumes:
+      - seaweedfs-volume-data:/data
+    depends_on:
+      - seaweedfs-master
+    restart: unless-stopped
+
+  # SeaweedFS Filer (for IAM management)
+  seaweedfs-filer:
+    image: chrislusf/seaweedfs:latest
+    command: filer -master=seaweedfs-master:9333 -ip.bind=0.0.0.0
+    ports:
+      - "8888:8888"   # Filer HTTP
+      - "18888:18888" # Filer gRPC
+    volumes:
+      - seaweedfs-filer-data:/data
+      - ./seaweedfs/filer.toml:/etc/seaweedfs/filer.toml:ro
+    depends_on:
+      - seaweedfs-master
+      - seaweedfs-volume
+    restart: unless-stopped
+
+  # SeaweedFS S3 Gateway
+  seaweedfs-s3:
+    image: chrislusf/seaweedfs:latest
+    command: s3 -filer=seaweedfs-filer:8888 -ip.bind=0.0.0.0 -config=/etc/seaweedfs/s3.json
+    ports:
+      - "8333:8333" # S3 API
+    volumes:
+      - ./seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
+    depends_on:
+      - seaweedfs-filer
+    restart: unless-stopped
+
+volumes:
+  seaweedfs-master-data:
+  seaweedfs-volume-data:
+  seaweedfs-filer-data:

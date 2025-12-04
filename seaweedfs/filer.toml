@@ -1,0 +1,10 @@
+# SeaweedFS Filer Configuration
+
+[filer.options]
+recursive_delete = true
+max_file_name_length = 512
+
+# Default store uses LevelDB (embedded, no external database needed)
+[leveldb2]
+enabled = true
+dir = "/data/filerldb2"
