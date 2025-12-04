@@ -13,19 +13,9 @@ export type IAMPermission = {
 
 export type IAMAction = 'Admin' | 'Read' | 'Write' | 'List' | 'Tagging';
 
-export type CreateUserRequest = {
-  userName: string;
-  permissions?: IAMPermission[];
-};
-
 export type CreateUserResponse = {
   userId: string;
   userName: string;
-  accessKeyId: string;
-  secretAccessKey: string;
-};
-
-export type RegenerateCredentialsResponse = {
   accessKeyId: string;
   secretAccessKey: string;
 };

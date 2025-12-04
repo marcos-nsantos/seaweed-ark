@@ -179,22 +179,20 @@ export function FileGrid({
         open={Boolean(menuAnchor.element)}
         onClose={handleMenuClose}
       >
-        {!menuAnchor.file?.isFolder && (
-          <>
-            <MenuItem onClick={() => handleAction(onDownload)}>
-              <ListItemIcon>
-                <DownloadIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>Download</ListItemText>
-            </MenuItem>
-            <MenuItem onClick={() => handleAction(onVersions)}>
-              <ListItemIcon>
-                <HistoryIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>Versions</ListItemText>
-            </MenuItem>
-          </>
-        )}
+        {!menuAnchor.file?.isFolder && [
+          <MenuItem key="download" onClick={() => handleAction(onDownload)}>
+            <ListItemIcon>
+              <DownloadIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Download</ListItemText>
+          </MenuItem>,
+          <MenuItem key="versions" onClick={() => handleAction(onVersions)}>
+            <ListItemIcon>
+              <HistoryIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Versions</ListItemText>
+          </MenuItem>,
+        ]}
         <MenuItem onClick={() => handleAction(onRename)}>
           <ListItemIcon>
             <RenameIcon fontSize="small" />

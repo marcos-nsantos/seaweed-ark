@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/config/query-keys';
 import type { S3ListObjectsResponse, S3ObjectVersion } from '@/types/s3';
 import type { ApiResponse } from '@/types/api';
@@ -87,9 +87,11 @@ async function copyObject(params: CopyObjectParams): Promise<void> {
 }
 
 export function useObjects(bucket: string, prefix?: string) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: queryKeys.objects.list(bucket, prefix),
-    queryFn: () => fetchObjects({ bucket, prefix }),
+    queryFn: ({ pageParam }) => fetchObjects({ bucket, prefix, continuationToken: pageParam }),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => (lastPage.isTruncated ? lastPage.continuationToken : undefined),
     enabled: !!bucket,
   });
 }

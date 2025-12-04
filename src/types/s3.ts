@@ -26,14 +26,6 @@ export type S3UploadProgress = {
   error?: string;
 };
 
-export type PresignedUrlRequest = {
-  bucket: string;
-  key: string;
-  operation: 'getObject' | 'putObject';
-  expiresIn?: number;
-  contentType?: string;
-};
-
 export type S3ObjectVersion = {
   key: string;
   versionId: string;

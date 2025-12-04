@@ -123,23 +123,21 @@ export function FileRow({
           transformOrigin={{ horizontal: 'right', vertical: 'top' }}
           anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
         >
-          {!file.isFolder && (
-            <>
-              <MenuItem onClick={handleAction(() => onDownload(file))}>
-                <ListItemIcon>
-                  <DownloadIcon fontSize="small" />
-                </ListItemIcon>
-                <ListItemText>Download</ListItemText>
-              </MenuItem>
+          {!file.isFolder && [
+            <MenuItem key="download" onClick={handleAction(() => onDownload(file))}>
+              <ListItemIcon>
+                <DownloadIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Download</ListItemText>
+            </MenuItem>,
 
-              <MenuItem onClick={handleAction(() => onVersions(file))}>
-                <ListItemIcon>
-                  <HistoryIcon fontSize="small" />
-                </ListItemIcon>
-                <ListItemText>Versions</ListItemText>
-              </MenuItem>
-            </>
-          )}
+            <MenuItem key="versions" onClick={handleAction(() => onVersions(file))}>
+              <ListItemIcon>
+                <HistoryIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Versions</ListItemText>
+            </MenuItem>,
+          ]}
 
           <MenuItem onClick={handleAction(() => onRename(file))}>
             <ListItemIcon>

@@ -57,7 +57,8 @@ type FileBrowserProps = {
 
 export function FileBrowser({ bucket, path, onNavigate }: FileBrowserProps) {
   const prefix = path.length > 0 ? `${path.join('/')}/` : '';
-  const { data, isLoading, error, refetch } = useObjects(bucket, prefix);
+  const { data, isLoading, error, refetch, hasNextPage, fetchNextPage, isFetchingNextPage } =
+    useObjects(bucket, prefix);
   const createFolder = useCreateFolder();
   const deleteObject = useDeleteObject();
 
@@ -77,7 +78,8 @@ export function FileBrowser({ bucket, path, onNavigate }: FileBrowserProps) {
     prefix,
   });
 
-  const objects = data?.objects || [];
+  // Flatten paginated results
+  const objects = data?.pages.flatMap((page) => page.objects) || [];
 
   const handleSelect = (file: S3Object) => {
     const newSelected = new Set(selected);
@@ -338,6 +340,15 @@ export function FileBrowser({ bucket, path, onNavigate }: FileBrowserProps) {
             Upload Files
           </Button>
         </Paper>
+      )}
+
+      {/* Load More */}
+      {hasNextPage && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+          <Button variant="outlined" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+            {isFetchingNextPage ? 'Loading...' : 'Load more'}
+          </Button>
+        </Box>
       )}
 
       {/* Create Folder Dialog */}
