@@ -25,6 +25,7 @@ import {
   DialogActions,
   ToggleButtonGroup,
   ToggleButton,
+  InputAdornment,
 } from '@mui/material';
 import {
   CreateNewFolder as CreateFolderIcon,
@@ -33,6 +34,8 @@ import {
   GridView as GridViewIcon,
   ViewList as ListViewIcon,
   Refresh as RefreshIcon,
+  Search as SearchIcon,
+  Clear as ClearIcon,
 } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { useObjects, useCreateFolder, useDeleteObject } from '@/hooks/use-s3-objects';
@@ -48,6 +51,7 @@ import { FilePreviewModal } from './file-preview-modal';
 import { RenameDialog } from './rename-dialog';
 import { VersionsDialog } from './versions-dialog';
 import { CopyDialog } from './copy-dialog';
+import { MoveDialog } from './move-dialog';
 import { ShareDialog } from './share-dialog';
 import type { S3Object } from '@/types/s3';
 
@@ -66,14 +70,17 @@ export function FileBrowser({ bucket, path, onNavigate }: FileBrowserProps) {
   const { viewMode, setViewMode } = useFilesViewMode();
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
   const [showUpload, setShowUpload] = useState(false);
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<S3Object | null>(null);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [previewFile, setPreviewFile] = useState<S3Object | null>(null);
   const [renameTarget, setRenameTarget] = useState<S3Object | null>(null);
   const [versionsTarget, setVersionsTarget] = useState<S3Object | null>(null);
   const [copyTarget, setCopyTarget] = useState<S3Object | null>(null);
+  const [moveTarget, setMoveTarget] = useState<S3Object | null>(null);
   const [shareTarget, setShareTarget] = useState<S3Object | null>(null);
 
   const { uploads, isUploading, uploadFiles, clearAll } = useUpload({
@@ -81,8 +88,14 @@ export function FileBrowser({ bucket, path, onNavigate }: FileBrowserProps) {
     prefix,
   });
 
-  // Flatten paginated results
-  const objects = data?.pages.flatMap((page) => page.objects) || [];
+  // Flatten paginated results and filter by search query
+  const allObjects = data?.pages.flatMap((page) => page.objects) || [];
+  const objects = searchQuery
+    ? allObjects.filter((obj) => {
+        const name = obj.key.split('/').filter(Boolean).pop() || '';
+        return name.toLowerCase().includes(searchQuery.toLowerCase());
+      })
+    : allObjects;
 
   const handleSelect = (file: S3Object) => {
     const newSelected = new Set(selected);
@@ -152,6 +165,30 @@ export function FileBrowser({ bucket, path, onNavigate }: FileBrowserProps) {
     }
   };
 
+  const handleBulkDelete = async () => {
+    const keysToDelete = Array.from(selected);
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const key of keysToDelete) {
+      try {
+        await deleteObject.mutateAsync({ bucket, key });
+        successCount++;
+      } catch {
+        errorCount++;
+      }
+    }
+
+    if (errorCount === 0) {
+      toast.success(`${successCount} item${successCount > 1 ? 's' : ''} deleted`);
+    } else {
+      toast.warning(`${successCount} deleted, ${errorCount} failed`);
+    }
+
+    setSelected(new Set());
+    setBulkDeleteOpen(false);
+  };
+
   const handleCreateFolder = async () => {
     if (!newFolderName.trim()) return;
 
@@ -172,6 +209,10 @@ export function FileBrowser({ bucket, path, onNavigate }: FileBrowserProps) {
 
   const handleCopy = (file: S3Object) => {
     setCopyTarget(file);
+  };
+
+  const handleMove = (file: S3Object) => {
+    setMoveTarget(file);
   };
 
   const handleVersions = (file: S3Object) => {
@@ -213,20 +254,38 @@ export function FileBrowser({ bucket, path, onNavigate }: FileBrowserProps) {
         </Button>
 
         {selected.size > 0 && (
-          <Tooltip title="Delete selected">
-            <IconButton
-              color="error"
-              onClick={() => {
-                const firstSelected = objects.find((o) => selected.has(o.key));
-                if (firstSelected) setDeleteTarget(firstSelected);
-              }}
-            >
+          <Tooltip title={`Delete ${selected.size} selected`}>
+            <IconButton color="error" onClick={() => setBulkDeleteOpen(true)}>
               <DeleteIcon />
             </IconButton>
           </Tooltip>
         )}
 
         <Box sx={{ flexGrow: 1 }} />
+
+        <TextField
+          size="small"
+          placeholder="Search files..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          sx={{ width: 200 }}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" color="action" />
+                </InputAdornment>
+              ),
+              endAdornment: searchQuery && (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={() => setSearchQuery('')}>
+                    <ClearIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
 
         <Tooltip title="Refresh">
           <IconButton onClick={() => refetch()}>
@@ -296,6 +355,7 @@ export function FileBrowser({ bucket, path, onNavigate }: FileBrowserProps) {
             onDelete={setDeleteTarget}
             onRename={handleRename}
             onCopy={handleCopy}
+            onMove={handleMove}
             onVersions={handleVersions}
             onShare={handleShare}
           />
@@ -329,6 +389,7 @@ export function FileBrowser({ bucket, path, onNavigate }: FileBrowserProps) {
                     onDelete={setDeleteTarget}
                     onRename={handleRename}
                     onCopy={handleCopy}
+                    onMove={handleMove}
                     onVersions={handleVersions}
                     onShare={handleShare}
                   />
@@ -397,6 +458,18 @@ export function FileBrowser({ bucket, path, onNavigate }: FileBrowserProps) {
         variant="danger"
       />
 
+      {/* Bulk Delete Confirmation */}
+      <ConfirmDialog
+        open={bulkDeleteOpen}
+        title="Delete Multiple Items"
+        message={`Are you sure you want to delete ${selected.size} item${selected.size > 1 ? 's' : ''}? This action cannot be undone.`}
+        confirmLabel={`Delete ${selected.size} item${selected.size > 1 ? 's' : ''}`}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setBulkDeleteOpen(false)}
+        isLoading={deleteObject.isPending}
+        variant="danger"
+      />
+
       {/* Upload Progress */}
       <UploadProgress uploads={uploads} onClear={clearAll} />
 
@@ -429,6 +502,14 @@ export function FileBrowser({ bucket, path, onNavigate }: FileBrowserProps) {
         open={!!copyTarget}
         onClose={() => setCopyTarget(null)}
         file={copyTarget}
+        bucket={bucket}
+      />
+
+      {/* Move Dialog */}
+      <MoveDialog
+        open={!!moveTarget}
+        onClose={() => setMoveTarget(null)}
+        file={moveTarget}
         bucket={bucket}
       />
 
