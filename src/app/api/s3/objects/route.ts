@@ -8,6 +8,7 @@ import {
   createFolder,
   renameObject,
 } from '@/lib/s3/operations';
+import { FolderNotEmptyError } from '@/lib/errors';
 
 const listObjectsSchema = z.object({
   bucket: z.string().min(1),
@@ -102,6 +103,12 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ data: { deleted: true } });
   } catch (error) {
     console.error('Delete object error:', error);
+    if (error instanceof FolderNotEmptyError) {
+      return NextResponse.json(
+        { error: { code: 'FOLDER_NOT_EMPTY', message: error.message } },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
       { error: { code: 'S3_ERROR', message: 'Failed to delete object' } },
       { status: 500 }
