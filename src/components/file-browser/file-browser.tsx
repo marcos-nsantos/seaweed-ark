@@ -163,7 +163,7 @@ export function FileBrowser({ bucket, path, onNavigate }: FileBrowserProps) {
     setRenameTarget(file);
   };
 
-  const handleCopy = (file: S3Object) => {
+  const handleCopy = (_file: S3Object) => {
     // TODO: Implement copy dialog
     toast.info('Copy coming soon');
   };

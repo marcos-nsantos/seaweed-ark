@@ -25,7 +25,7 @@ import {
   History as HistoryIcon,
 } from '@mui/icons-material';
 import { useState } from 'react';
-import { formatBytes, formatDate, getFileExtension, isImageFile, isPdfFile } from '@/lib/utils';
+import { formatBytes, formatDate, isImageFile, isPdfFile } from '@/lib/utils';
 import type { S3Object } from '@/types/s3';
 
 type FileRowProps = {

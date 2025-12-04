@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -22,15 +22,14 @@ type RenameDialogProps = {
 };
 
 export function RenameDialog({ open, onClose, file, bucket }: RenameDialogProps) {
-  const [newName, setNewName] = useState('');
+  const initialName = file ? getFileName(file.key.replace(/\/$/, '')) : '';
+  const [newName, setNewName] = useState(initialName);
   const renameObject = useRenameObject();
 
-  useEffect(() => {
-    if (file) {
-      const name = getFileName(file.key.replace(/\/$/, ''));
-      setNewName(name);
-    }
-  }, [file]);
+  // Reset state when file changes
+  if (file && newName === '' && initialName !== '') {
+    setNewName(initialName);
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

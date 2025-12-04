@@ -63,7 +63,10 @@ export async function listObjects(
     ? Array.from(
         response.Contents.reduce((map, obj) => {
           const existing = map.get(obj.Key ?? '');
-          if (!existing || (obj.LastModified && existing.LastModified && obj.LastModified > existing.LastModified)) {
+          if (
+            !existing ||
+            (obj.LastModified && existing.LastModified && obj.LastModified > existing.LastModified)
+          ) {
             map.set(obj.Key ?? '', obj);
           }
           return map;

@@ -11,7 +11,6 @@ import {
   ListItemText,
   Typography,
   Divider,
-  IconButton,
   useTheme,
   useMediaQuery,
 } from '@mui/material';
